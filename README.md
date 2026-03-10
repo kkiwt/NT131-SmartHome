@@ -1,5 +1,5 @@
 # NT131-SmartHome
-###Đồ Án SmartHome được thực hiện bởi Nhóm 5 thuộc lớp NT131.Q21 .
+#Đồ Án SmartHome được thực hiện bởi Nhóm 5 thuộc lớp NT131.Q21 .
 
 Mục tiêu của hệ thống là cho phép người dùng giám sát và điều khiển các thiết bị trong nhà từ xa thông qua kết nối mạng không dây.
 Hệ thống tích hợp các thành phần phần cứng nhúng, mạng truyền thông không dây và nền tảng lưu trữ dữ liệu để tạo ra một môi trường nhà ở thông minh, linh hoạt và dễ mở rộng.
