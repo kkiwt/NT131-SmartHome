@@ -1,5 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useRef, useState } from "react";
+import { router } from "expo-router";
 
 export default function OtpScreen(){
 
@@ -69,9 +70,12 @@ export default function OtpScreen(){
 
       </View>
 
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Xác nhận</Text>
-      </TouchableOpacity>
+                <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push("/new-password")}
+            >
+            <Text style={styles.buttonText}>Xác nhận</Text>
+            </TouchableOpacity>
 
       <TouchableOpacity onPress={resendOtp}>
         <Text style={styles.resend}>
