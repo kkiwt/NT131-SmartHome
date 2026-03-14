@@ -3,13 +3,19 @@ import { router } from "expo-router";
 
 export default function SettingsScreen(){
 
-  return(
+  const handleLogout = () => {
+    router.replace("/(auth)/login");
+  };
+
+  return (
 
     <View style={styles.container}>
 
+      <Text style={styles.title}>Cài đặt</Text>
+
       <TouchableOpacity
         style={styles.button}
-        onPress={()=>router.replace("/auth/login")}
+        onPress={handleLogout}
       >
         <Text style={styles.buttonText}>Đăng xuất</Text>
       </TouchableOpacity>
@@ -17,6 +23,7 @@ export default function SettingsScreen(){
     </View>
 
   );
+
 }
 
 const styles = StyleSheet.create({
@@ -26,6 +33,12 @@ container:{
   justifyContent:"center",
   alignItems:"center",
   backgroundColor:"#D79AA3"
+},
+
+title:{
+  fontSize:22,
+  fontWeight:"bold",
+  marginBottom:30
 },
 
 button:{
@@ -38,7 +51,8 @@ button:{
 
 buttonText:{
   color:"white",
-  fontWeight:"bold"
+  fontWeight:"bold",
+  fontSize:16
 }
 
 });
