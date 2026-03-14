@@ -24,6 +24,10 @@ export default function LoginScreen() {
           secureTextEntry
         />
 
+        <TouchableOpacity onPress={() => router.push("/forgot-password")}>
+          <Text style={styles.forgot}>Quên mật khẩu?</Text>
+        </TouchableOpacity>
+
       </View>
 
       <TouchableOpacity
@@ -33,9 +37,7 @@ export default function LoginScreen() {
         <Text style={styles.buttonText}>Đăng Nhập</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={() => router.push("/auth/register")}
-      >
+      <TouchableOpacity onPress={() => router.push("/register")}>
         <Text style={styles.link}>Chưa có tài khoản? Đăng ký</Text>
       </TouchableOpacity>
 
@@ -78,6 +80,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E5E5",
     borderRadius: 25,
     padding: 10,
+    marginTop: 5
+  },
+
+  forgot: {
+    alignSelf: "flex-end",
     marginTop: 5
   },
 

@@ -8,16 +8,28 @@ export default function ForgotPassword() {
 
   const [email,setEmail] = useState("");
 
-  const resetPassword = async () => {
+  /*const resetPassword = async () => {
     try{
       await sendPasswordResetEmail(auth,email);
       Alert.alert("Thành công","Email reset mật khẩu đã được gửi.");
+
+      router.push("/otp");
     }
     catch(error){
       Alert.alert("Lỗi","Email không tồn tại trong hệ thống");
     }
+  }*/
+ //hàm test flow
+  const resetPassword = () => {
+
+  if(email === ""){
+    Alert.alert("Thông báo","Vui lòng nhập email");
+    return;
   }
 
+  router.push("/otp");
+
+}
   return(
 
     <View style={styles.container}>
@@ -67,14 +79,19 @@ const styles = StyleSheet.create({
   },
 
   button:{
-    marginTop:20,
+    marginTop:25,
     backgroundColor:"black",
-    padding:15,
-    borderRadius:20
+    paddingVertical:15,
+    paddingHorizontal:40,
+    borderRadius:25,
+    width:"60%",
+    alignItems:"center"
   },
 
   buttonText:{
-    color:"white"
+    color:"white",
+    fontSize:16,
+    fontWeight:"bold"
   }
 
 });
