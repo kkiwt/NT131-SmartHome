@@ -1,7 +1,28 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { router } from "expo-router";
+import { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../services/firebaseConfig";
 
 export default function LoginScreen() {
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = async () => {
+    try {
+      if (!email || !password) {
+        Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin");
+        return;
+      }
+
+      await signInWithEmailAndPassword(auth, email, password);
+      router.replace("/(tabs)");
+
+    } catch (error) {
+      Alert.alert("Lỗi", "Sai tài khoản hoặc mật khẩu");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -15,6 +36,8 @@ export default function LoginScreen() {
         <TextInput
           style={styles.input}
           placeholder="Nhập Gmail"
+          value={email}
+          onChangeText={setEmail}
         />
 
         <Text style={styles.label}>Mật Khẩu:</Text>
@@ -22,6 +45,8 @@ export default function LoginScreen() {
           style={styles.input}
           placeholder="Nhập mật khẩu"
           secureTextEntry
+          value={password}
+          onChangeText={setPassword}
         />
 
         <TouchableOpacity onPress={() => router.push("/forgot-password")}>
@@ -32,7 +57,7 @@ export default function LoginScreen() {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.replace("/(tabs)")}
+        onPress={handleLogin}
       >
         <Text style={styles.buttonText}>Đăng Nhập</Text>
       </TouchableOpacity>
@@ -46,48 +71,40 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: "#D79AA3",
     alignItems: "center",
     justifyContent: "center"
   },
-
   title: {
     fontSize: 34,
     fontWeight: "bold"
   },
-
   subtitle: {
     fontSize: 18,
     marginBottom: 20
   },
-
   formBox: {
     width: "80%",
     backgroundColor: "#C6908F",
     padding: 20,
     borderRadius: 30
   },
-
   label: {
     fontWeight: "bold",
     marginTop: 10
   },
-
   input: {
     backgroundColor: "#E5E5E5",
     borderRadius: 25,
     padding: 10,
     marginTop: 5
   },
-
   forgot: {
     alignSelf: "flex-end",
     marginTop: 5
   },
-
   button: {
     backgroundColor: "black",
     padding: 15,
@@ -96,14 +113,11 @@ const styles = StyleSheet.create({
     width: 200,
     alignItems: "center"
   },
-
   buttonText: {
     color: "white",
     fontWeight: "bold"
   },
-
   link: {
     marginTop: 15
   }
-
 });
