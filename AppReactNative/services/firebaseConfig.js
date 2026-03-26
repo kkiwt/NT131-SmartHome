@@ -1,8 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getDatabase } from "firebase/database";
 import { getStorage } from "firebase/storage";
-
-export const storage = getStorage(app);
 
 // config của bạn
 const firebaseConfig = {
@@ -15,8 +14,10 @@ const firebaseConfig = {
   appId: "1:848175227650:web:a0d590f466a9dcc963981b",
 };
 
-// init
+
 const app = initializeApp(firebaseConfig);
 
-// export auth để dùng
+
 export const auth = getAuth(app);
+export const db = getDatabase(app);
+export const storage = getStorage(app);
