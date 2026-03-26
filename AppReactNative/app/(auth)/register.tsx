@@ -19,7 +19,7 @@ export default function RegisterScreen() {
 
     setTimeout(() => {
       setToast("");
-      router.replace("/(tabs)");
+      router.replace("/profile");
     }, 1500);
 
   } catch (error) {
