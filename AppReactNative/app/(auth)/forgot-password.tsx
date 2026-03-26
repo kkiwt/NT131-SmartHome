@@ -17,11 +17,18 @@ export default function ForgotPassword() {
 
     try{
       await sendPasswordResetEmail(auth,email);
-      Alert.alert("Thành công","Email reset mật khẩu đã được gửi.");
-      router.push("/otp");
+
+      Alert.alert(
+        "Thành công",
+        "Đã gửi email reset mật khẩu. Vui lòng kiểm tra Gmail của bạn."
+      );
+
+      // 👉 quay về login thay vì OTP
+      router.replace("/login");
+
     }
     catch(error){
-      Alert.alert("Lỗi","Email không tồn tại trong hệ thống");
+      Alert.alert("Lỗi","Email không tồn tại hoặc sai định dạng");
     }
   }
 

@@ -8,6 +8,7 @@ export default function RegisterScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = async () => {
     try {
@@ -43,13 +44,33 @@ export default function RegisterScreen() {
         />
 
         <Text style={styles.label}>Mật Khẩu:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập mật khẩu"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+
+        <View style={{ position: "relative" }}>
+          <TextInput
+            style={styles.input}
+            placeholder="Nhập mật khẩu"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+          />
+
+          <TouchableOpacity
+            style={{
+              position: "absolute",
+              right: 15,
+              top: 12
+            }}
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <Text>{showPassword ? "Ẩn" : "Hiện"}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity onPress={() => router.push("/forgot-password")}>
+          <Text style={{ alignSelf: "flex-end", marginTop: 5 }}>
+            Quên mật khẩu?
+          </Text>
+        </TouchableOpacity>
 
       </View>
 
