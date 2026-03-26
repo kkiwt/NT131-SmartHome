@@ -7,30 +7,32 @@ import { useState } from "react";
 export default function ForgotPassword() {
 
   const [email,setEmail] = useState("");
+  const [toast, setToast] = useState("");
 
   const resetPassword = async () => {
 
-    if(email === ""){
-      Alert.alert("Thông báo","Vui lòng nhập email");
-      return;
-    }
-
-    try{
-      await sendPasswordResetEmail(auth,email);
-
-      Alert.alert(
-        "Thành công",
-        "Đã gửi email reset mật khẩu. Vui lòng kiểm tra Gmail của bạn."
-      );
-
-      // 👉 quay về login thay vì OTP
-      router.replace("/login");
-
-    }
-    catch(error){
-      Alert.alert("Lỗi","Email không tồn tại hoặc sai định dạng");
-    }
+  if(email === ""){
+    setToast("Vui lòng nhập email");
+    setTimeout(() => setToast(""),1500);
+    return;
   }
+
+  try{
+    await sendPasswordResetEmail(auth,email);
+
+    setToast("Vui lòng check mail để cập nhật mật khẩu (Nếu không có nhớ kiểm tra thư rác)");
+
+    setTimeout(()=>{
+      setToast("");
+      router.replace("/login");
+    },2000);
+
+  }
+  catch(error){
+    setToast("Email không có trong hệ thống, vui lòng đăng kí");
+    setTimeout(()=>setToast(""),1500);
+  }
+};
 
   return(
     <View style={styles.container}>

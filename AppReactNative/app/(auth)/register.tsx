@@ -9,23 +9,24 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [toast, setToast] = useState("");
 
   const handleRegister = async () => {
-    try {
-      if (!email || !password) {
-        Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin");
-        return;
-      }
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
 
-      await createUserWithEmailAndPassword(auth, email, password);
+    setToast("Bạn đã đăng ký thành công");
 
-      Alert.alert("Thành công", "Đăng ký thành công!");
+    setTimeout(() => {
+      setToast("");
       router.replace("/(tabs)");
+    }, 1500);
 
-    } catch (error) {
-      Alert.alert("Lỗi", error.message);
-    }
-  };
+  } catch (error) {
+    setToast("Email đã tồn tại hoặc lỗi");
+    setTimeout(() => setToast(""), 1500);
+  }
+};
 
   return (
     <View style={styles.container}>
