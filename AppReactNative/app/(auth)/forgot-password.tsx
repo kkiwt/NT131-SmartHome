@@ -1,37 +1,40 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../../firebase";
+import { auth } from "../../services/firebaseConfig";
 import { router } from "expo-router";
 import { useState } from "react";
 
 export default function ForgotPassword() {
 
   const [email,setEmail] = useState("");
+  const [toast, setToast] = useState("");
 
-  /*const resetPassword = async () => {
-    try{
-      await sendPasswordResetEmail(auth,email);
-      Alert.alert("Thành công","Email reset mật khẩu đã được gửi.");
-
-      router.push("/otp");
-    }
-    catch(error){
-      Alert.alert("Lỗi","Email không tồn tại trong hệ thống");
-    }
-  }*/
- //hàm test flow
-  const resetPassword = () => {
+  const resetPassword = async () => {
 
   if(email === ""){
-    Alert.alert("Thông báo","Vui lòng nhập email");
+    setToast("Vui lòng nhập email");
+    setTimeout(() => setToast(""),1500);
     return;
   }
 
-  router.push("/otp");
+  try{
+    await sendPasswordResetEmail(auth,email);
 
-}
+    setToast("Vui lòng check mail để cập nhật mật khẩu (Nếu không có nhớ kiểm tra thư rác)");
+
+    setTimeout(()=>{
+      setToast("");
+      router.replace("/login");
+    },2000);
+
+  }
+  catch(error){
+    setToast("Email không có trong hệ thống, vui lòng đăng kí");
+    setTimeout(()=>setToast(""),1500);
+  }
+};
+
   return(
-
     <View style={styles.container}>
 
       <Text style={styles.title}>Quên mật khẩu</Text>
@@ -52,32 +55,26 @@ export default function ForgotPassword() {
       </TouchableOpacity>
 
     </View>
-
   )
-
 }
 
 const styles = StyleSheet.create({
-
   container:{
     flex:1,
     justifyContent:"center",
     alignItems:"center",
     backgroundColor:"#D79AA3"
   },
-
   title:{
     fontSize:24,
     marginBottom:20
   },
-
   input:{
     width:"80%",
     backgroundColor:"#fff",
     padding:10,
     borderRadius:10
   },
-
   button:{
     marginTop:25,
     backgroundColor:"black",
@@ -87,11 +84,9 @@ const styles = StyleSheet.create({
     width:"60%",
     alignItems:"center"
   },
-
   buttonText:{
     color:"white",
     fontSize:16,
     fontWeight:"bold"
   }
-
 });
