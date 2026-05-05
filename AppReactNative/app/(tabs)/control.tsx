@@ -9,14 +9,20 @@ import {
   ScrollView
 } from "react-native";
 import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function ControlScreen() {
 
+  // trạng thái thiết bị
   const [garageDoor, setGarageDoor] = useState(false);
   const [mainDoor, setMainDoor] = useState(true);
   const [livingLight, setLivingLight] = useState(false);
   const [bedroomLight, setBedroomLight] = useState(false);
 
+  // voice UI
+  const [isRecording, setIsRecording] = useState(false);
+
+  // password
   const [password, setPassword] = useState("");
 
   const handleChangePassword = () => {
@@ -60,6 +66,26 @@ export default function ControlScreen() {
     <ScrollView contentContainerStyle={styles.container}>
 
       <Text style={styles.title}>Điều khiển thiết bị</Text>
+
+      {/* Voice */}
+      <View style={styles.box}>
+        <Text style={styles.label}>Voice</Text>
+
+        <Text style={styles.status}>
+          {isRecording ? "Đang ghi âm..." : "Nhấn giữ để nói"}
+        </Text>
+
+        <TouchableOpacity
+          style={[
+            styles.voiceButton,
+            { backgroundColor: isRecording ? "#ff4d4d" : "#4CAF50" }
+          ]}
+          onPressIn={() => setIsRecording(true)}
+          onPressOut={() => setIsRecording(false)}
+        >
+          <Ionicons name="mic" size={35} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
       {renderItem("Khoá cửa gara", garageDoor, setGarageDoor, "Mở", "Đóng")}
       {renderItem("Khoá cửa chính", mainDoor, setMainDoor, "Mở", "Đóng")}
@@ -138,6 +164,20 @@ const styles = StyleSheet.create({
     marginTop: 10,
     width: "100%",
     alignItems: "center"
+  },
+
+  voiceButton: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6
   },
 
   buttonText: {
