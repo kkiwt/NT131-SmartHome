@@ -18,6 +18,9 @@ export default function ControlScreen() {
   const [mainDoor, setMainDoor] = useState(true);
   const [livingLight, setLivingLight] = useState(false);
   const [bedroomLight, setBedroomLight] = useState(false);
+  const [garageLight, setGarageLight] = useState(false); // NEW
+
+  const [autoGarage, setAutoGarage] = useState(false);
 
   // voice UI
   const [isRecording, setIsRecording] = useState(false);
@@ -87,10 +90,31 @@ export default function ControlScreen() {
         </TouchableOpacity>
       </View>
 
-      {renderItem("Khoá cửa gara", garageDoor, setGarageDoor, "Mở", "Đóng")}
-      {renderItem("Khoá cửa chính", mainDoor, setMainDoor, "Mở", "Đóng")}
+      {/* Thiết bị */}
+      {renderItem("Khoá cửa gara", garageDoor, setGarageDoor, "Khoá", "Không Khoá")}
+      {renderItem("Khoá cửa chính", mainDoor, setMainDoor, "Khoá", "Không Khoá")}
       {renderItem("Đèn phòng khách", livingLight, setLivingLight, "Bật", "Tắt")}
       {renderItem("Đèn phòng ngủ", bedroomLight, setBedroomLight, "Bật", "Tắt")}
+      {renderItem("Đèn gara", garageLight, setGarageLight, "Bật", "Tắt")} {/* NEW */}
+
+      {/* Auto garage */}
+      <View style={styles.box}>
+        <Text style={styles.label}>Tự động mở cửa gara</Text>
+
+        <Text style={styles.status}>
+          Trạng thái: {autoGarage ? "Bật" : "Tắt"}
+        </Text>
+
+        <Switch
+          value={autoGarage}
+          onValueChange={(val) => {
+            setAutoGarage(val);
+
+            // gợi ý logic: bật auto → bật luôn đèn gara
+            if (val) setGarageLight(true);
+          }}
+        />
+      </View>
 
       {/* Đổi mật khẩu */}
       <View style={styles.box}>
