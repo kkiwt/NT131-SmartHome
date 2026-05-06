@@ -1,0 +1,27 @@
+mqtt-nodejs-firebase-app
+mqtt sẽ tạo 1 cái noti giả :
+mosquitto_pub -h localhost -t "smarthome/sensors" -m '{"temperature":28.5,"humidity":65}'
+rồi truyền dần qua nodejs-firebase-app app sẽ hiện ngay register.tsx (tức màn hình ban đầu khi vào localhost ở góc phải trên cùng)
+
+Cấu trúc thư mục dự kiến theo minh kiệt
+-AppReactNative
+-Nodejs
++index.js
++serviceAccountKey.json ((lấy trong firebase console_
++package.json
++.env
+-ESP32 (demo thôi)
++ESP32_DEMO.ino
+
+cài mosquito nếu chưa có
+sudo apt install mosquitto mosquitto-clients -y
+
+cách thức câuú hình thư mục nodejs:
+mkdir smarthome-backend
+cd smarthome-backend
+npm init -y
+npm install mqtt firebase-admin dotenv
+
+sau đó chạy server:
+node index.js
+rồi chạy lệnh mosquito ban đầu

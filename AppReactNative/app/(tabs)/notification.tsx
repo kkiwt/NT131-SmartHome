@@ -1,67 +1,82 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 
-export default function NotificationScreen(){
+export default function NotificationScreen() {
 
-  const messages = [
-    "BÁO ĐỘNG!!! CÓ CHÁY KÍCH HOẠT HỆ THỐNG CHỮA CHÁY",
-    "CỬA ĐÃ ĐƯỢC MỞ KHOÁ",
-    "GHI NHẬN CHUYỂN ĐỘNG NHIỀU TRƯỚC CỬA"
+  const notifications = [
+    {
+      title: "CỬA GARA",
+      message: "ĐÃ ĐƯỢC MỞ",
+      time: "10:30"
+    },
+    {
+      title: "CỬA CHÍNH",
+      message: "ĐÃ ĐƯỢC MỞ",
+      time: "11:05"
+    },
+    {
+      title: "CẢM BIẾN",
+      message: "PHÁT HIỆN CHUYỂN ĐỘNG",
+      time: "11:10"
+    }
   ];
 
-  const randomMessage = () =>{
-    return messages[Math.floor(Math.random()*messages.length)];
-  }
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
 
-  return(
+      <Text style={styles.header}>Thông báo</Text>
 
-    <View style={styles.container}>
+      {notifications.map((item, index) => (
+        <View key={index} style={styles.box}>
 
-      <Text style={styles.title}>Thông báo</Text>
+          {/* Heading 1 */}
+          <Text style={styles.title}>
+            {item.title}
+          </Text>
 
-      <View style={styles.box}>
-        <Text style={styles.text}>{randomMessage()}</Text>
-      </View>
+          {/* Heading 2 */}
+          <Text style={styles.message}>
+            {item.message} VÀO LÚC {item.time}
+          </Text>
 
-      <View style={styles.box}>
-        <Text style={styles.text}>{randomMessage()}</Text>
-      </View>
+        </View>
+      ))}
 
-      <View style={styles.box}>
-        <Text style={styles.text}>{randomMessage()}</Text>
-      </View>
-
-    </View>
-
+    </ScrollView>
   );
-
 }
 
 const styles = StyleSheet.create({
 
-container:{
-  flex:1,
-  alignItems:"center",
-  justifyContent:"center",
-  backgroundColor:"#D79AA3"
-},
+  container: {
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#D79AA3",
+    paddingVertical: 20
+  },
 
-title:{
-  fontSize:22,
-  fontWeight:"bold",
-  marginBottom:30
-},
+  header: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 30
+  },
 
-box:{
-  backgroundColor:"#C6908F",
-  width:"85%",
-  padding:20,
-  borderRadius:20,
-  marginBottom:20
-},
+  box: {
+    backgroundColor: "#C6908F",
+    width: "85%",
+    padding: 15,
+    borderRadius: 20,
+    marginBottom: 15
+  },
 
-text:{
-  fontWeight:"bold",
-  fontSize:16
-}
+  title: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5
+  },
+
+  message: {
+    fontSize: 14
+  }
 
 });
