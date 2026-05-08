@@ -1,68 +1,65 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { router } from "expo-router";
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebaseConfig";
 
 export default function RegisterScreen() {
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [toast, setToast] = useState("");
 
   const handleRegister = async () => {
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
 
-    setToast("Bạn đã đăng ký thành công");
+      setToast("Bạn đã đăng ký thành công");
 
-    setTimeout(() => {
-      setToast("");
-      router.replace("/profile");
-    }, 1500);
-
-  } catch (error) {
-    setToast("Email đã tồn tại hoặc lỗi");
-    setTimeout(() => setToast(""), 1500);
-  }
-};
+      setTimeout(() => {
+        setToast("");
+        router.replace("/profile");
+      }, 1500);
+    } catch (error) {
+      setToast("Email đã tồn tại hoặc lỗi định dạng");
+      setTimeout(() => setToast(""), 1500);
+    }
+  };
 
   return (
     <View style={styles.container}>
+      {/* Hiển thị Toast */}
+      {toast !== "" && (
+        <View style={styles.toast}>
+          <Text style={{ color: "white", textAlign: "center" }}>{toast}</Text>
+        </View>
+      )}
 
       <Text style={styles.title}>Smarthome</Text>
       <Text style={styles.subtitle}>ĐĂNG KÝ</Text>
 
       <View style={styles.formBox}>
-
         <Text style={styles.label}>Gmail:</Text>
         <TextInput
           style={styles.input}
           placeholder="Nhập Gmail"
           value={email}
           onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
 
         <Text style={styles.label}>Mật Khẩu:</Text>
-
         <View style={{ position: "relative" }}>
           <TextInput
-            style={styles.input}
+            style={styles.inputPassword}
             placeholder="Nhập mật khẩu"
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
           />
 
-          <TouchableOpacity
-            style={{
-              position: "absolute",
-              right: 15,
-              top: 12
-            }}
-            onPress={() => setShowPassword(!showPassword)}
-          >
+          <TouchableOpacity style={styles.eye} onPress={() => setShowPassword(!showPassword)}>
             <Text>{showPassword ? "Ẩn" : "Hiện"}</Text>
           </TouchableOpacity>
         </View>
@@ -72,20 +69,15 @@ export default function RegisterScreen() {
             Quên mật khẩu?
           </Text>
         </TouchableOpacity>
-
       </View>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleRegister}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Đăng Ký</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push("/login")}>
         <Text style={styles.link}>Đã có tài khoản? Đăng nhập</Text>
       </TouchableOpacity>
-
     </View>
   );
 }
@@ -121,6 +113,18 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 5
   },
+  inputPassword: {
+    backgroundColor: "#E5E5E5",
+    borderRadius: 25,
+    padding: 10,
+    marginTop: 5,
+    paddingRight: 50 // Giữ khoảng cách không cho chữ đè lên chữ Ẩn/Hiện
+  },
+  eye: {
+    position: "absolute",
+    right: 15,
+    top: 18
+  },
   button: {
     backgroundColor: "black",
     padding: 15,
@@ -135,5 +139,14 @@ const styles = StyleSheet.create({
   },
   link: {
     marginTop: 15
+  },
+  toast: {
+    position: "absolute",
+    top: 50,
+    alignSelf: "center",
+    backgroundColor: "black",
+    padding: 10,
+    borderRadius: 10,
+    zIndex: 999
   }
 });

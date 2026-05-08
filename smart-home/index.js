@@ -116,12 +116,38 @@ client.on('message', (topic, message) => {
     }
 
     // 2. Lưu Logs RFID
-    if (rootNode === "sensors" && subNode === "rfid") {
+// 2. Xử lý RFID và Automation tự động mở cửa
+if (rootNode === "sensors" && subNode === "rfid") {
+        const rfidUID = message.toString().toUpperCase();
+        
         db.ref("smarthome/sensors/rfid_logs").push({
-            uid: message.toString().toUpperCase(),
+            uid: rfidUID,
             timestamp: Date.now()
         });
-        console.log(`🔑 [Security] Thẻ RFID: ${message.toString().toUpperCase()}`);
+
+        console.log(`🔑 [Security] Thẻ RFID: ${rfidUID}`);
+
+        // --- AUTOMATION: MỞ CỬA VÀ TỰ ĐỘNG ĐÓNG ---
+        // Giả sử cứ quẹt thẻ là mở (Kiệt có thể thêm check UID thẻ tại đây)
+        if (rfidUID !== "") { 
+            console.log("🔓 [Automation] Thẻ hợp lệ! Đang mở cửa...");
+            
+            // Bước 1: Mở chốt và mở cửa
+            db.ref("smarthome/commands").update({
+                unlock_door: true,
+                open_door: true
+            });
+
+            // Bước 2: Đợi 10 giây sau tự động đóng và khóa lại
+            console.log("⏳ [Automation] Cửa sẽ tự đóng sau 10 giây...");
+            setTimeout(() => {
+                db.ref("smarthome/commands").update({
+                    open_door: false,   // Đóng cửa (Servo về 0)
+                    unlock_door: false  // Khóa chốt (Relay về HIGH)
+                });
+                console.log("🔒 [Automation] Đã tự động đóng và khóa cửa.");
+            }, 10000); // 10000ms = 10 giây
+        }
         return;
     }
 

@@ -38,7 +38,7 @@ export default function SettingsScreen(){
       setProfile(data);
       setIsOwner(data?.role === "owner");
     });
-  },[]);
+  },[uid]);
 
   // 🔥 LOAD REQUEST (FIX NULL)
   useEffect(()=>{
@@ -66,7 +66,7 @@ export default function SettingsScreen(){
       setRequests(list);
     });
 
-  },[profile]);
+  },[profile, isOwner]);
 
   // 🔥 CREATE HOUSE
   const handleCreate = async ()=>{

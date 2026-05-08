@@ -1,24 +1,33 @@
 import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { useEffect, useState } from "react";
+import { ref, onValue } from "firebase/database";
+import { db } from "../../services/firebaseConfig";
 
 export default function NotificationScreen() {
 
-  const notifications = [
-    {
-      title: "CỬA GARA",
-      message: "ĐÃ ĐƯỢC MỞ",
-      time: "10:30"
-    },
-    {
-      title: "CỬA CHÍNH",
-      message: "ĐÃ ĐƯỢC MỞ",
-      time: "11:05"
-    },
-    {
-      title: "CẢM BIẾN",
-      message: "PHÁT HIỆN CHUYỂN ĐỘNG",
-      time: "11:10"
-    }
-  ];
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(()=>{
+    // 🔥 Listen to notifications from Firebase
+    const notifRef = ref(db, 'smarthome/notifications');
+    
+    return onValue(notifRef, (snap)=>{
+      const data = snap.val();
+      
+      if(!data){
+        setNotifications([]);
+        return;
+      }
+
+      // Convert object to array and sort by timestamp (newest first)
+      const notificationList = Object.entries(data).map(([key, value]: any) => ({
+        id: key,
+        ...value
+      })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+      setNotifications(notificationList);
+    });
+  },[]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -26,16 +35,16 @@ export default function NotificationScreen() {
       <Text style={styles.header}>Thông báo</Text>
 
       {notifications.map((item, index) => (
-        <View key={index} style={styles.box}>
+        <View key={item.id || index} style={styles.box}>
 
           {/* Heading 1 */}
           <Text style={styles.title}>
-            {item.title}
+            {item.title || item.type || "Thông báo"}
           </Text>
 
           {/* Heading 2 */}
           <Text style={styles.message}>
-            {item.message} VÀO LÚC {item.time}
+            {item.message || item.content || "Cập nhật"} {item.time || (item.timestamp ? new Date(item.timestamp).toLocaleTimeString('vi-VN') : "")}
           </Text>
 
         </View>
