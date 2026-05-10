@@ -1,6 +1,13 @@
 const mqtt = require('mqtt');
 const admin = require('firebase-admin');
+let isProcessingRFID = false; // Biến chặn quẹt thẻ liên tục
 
+let loginAttempts = 0;       // Đếm số lần nhập sai
+let isLocked = false;        // Trạng thái có đang bị khóa hay không
+let lockUntil = 0;           // Thời điểm sẽ hết bị khóa (timestamp)
+
+let garageCloseTimestamp = 0; // Lưu thời điểm sẽ đóng cửa
+global.garageTimer = null;
 // 1. Cấu hình Firebase
 const serviceAccount = require("./serviceAccountKey.json");
 
@@ -29,26 +36,25 @@ db.ref("smarthome/commands").on("child_changed", (snapshot) => {
     const value = snapshot.val();
     
     // Đồng nhất dữ liệu gửi xuống ESP32 (ON/OFF)
-    const payload = typeof value === 'boolean' ? (value ? "ON" : "OFF") : value.toString();
+    const payload = typeof value === 'boolean' ? (value ? "true" : "false") : value.toString();
     client.publish(`smarthome/commands/${key}`, payload, { qos: 1 });
 
     let devicePath = "";
     let statusText = "";
 
     // Ánh xạ lệnh từ App sang trạng thái thiết bị trong Database
+// Thay thế đoạn switch(key) trong Backend của bạn
     switch(key) {
         case "open_door":
             devicePath = "devices/door";
             statusText = value ? "open" : "closed";
+            // Khi mở cửa thì nên tự động kích hoạt lệnh unlock chốt luôn
+            client.publish(`smarthome/commands/unlock_door`, value ? "true" : "false", { qos: 1 });
             break;
 
-        case "open_garage": // Đã sửa lại cho gọn
+        case "open_garage":
             devicePath = "devices/garage_door";
             statusText = value ? "open" : "closed";
-            break;
-        case "unlock_door": 
-            devicePath = "devices/door_lock_main"; 
-            statusText = value ? "unlocked" : "locked"; 
             break;
 
         case "toggle_sprinkler": 
@@ -60,23 +66,33 @@ db.ref("smarthome/commands").on("child_changed", (snapshot) => {
             devicePath = "devices/lights/light_1"; 
             statusText = value ? "on" : "off"; 
             break;
-            
-        case "open_garage": 
-            if(value === true) { 
-                devicePath = "devices/garage_door"; 
-                statusText = "opening"; 
-                db.ref("smarthome/commands/close_garage").set(false);
-            } 
-            break;
 
-        case "close_garage": 
-            if(value === true) { 
-                devicePath = "devices/garage_door"; 
-                statusText = "closed"; 
-                db.ref("smarthome/commands/open_garage").set(false);
-            } 
+        case "toggle_light_2": 
+            devicePath = "devices/lights/light_2"; 
+            statusText = value ? "on" : "off"; 
             break;
-    }
+        case "toggle_light_3": 
+            devicePath = "devices/lights/light_3"; 
+            statusText = value ? "on" : "off"; 
+                break;
+        case "toggle_buzzer": 
+                devicePath = "devices/buzzer_alarm"; 
+                statusText = value ? "on" : "off"; 
+        
+        // Nếu bật còi (Báo cháy) -> Tự tạo Notification
+            if (value) {
+                db.ref("smarthome/notifications").push({
+                    title: "CẢNH BÁO CHÁY",
+                    message: "Phát hiện khói/nhiệt độ cao. Còi báo động đã kích hoạt!",
+                    timestamp: Date.now(),
+                    type: "danger",
+                    read: false
+            });
+        }
+        break;
+
+
+}
 
     // Cập nhật trạng thái hiển thị trên App ngay khi có lệnh
     if (devicePath && statusText) {
@@ -89,6 +105,50 @@ db.ref("smarthome/commands").on("child_changed", (snapshot) => {
 });
 
 // ==========================================
+// HÀM GIÁM SÁT: CHECK TRỰC TIẾP TỪ NODE PIR
+// ==========================================
+/* const startGarageMonitor = () => {
+    console.log("⏳ Bắt đầu giám sát an toàn Garage...");
+
+    // Dùng .on('child_added') để lắng nghe mỗi khi có PIR mới push lên
+    // Firebase sẽ tự đẩy dữ liệu về, mình không cần dùng setTimeout đi hỏi nữa
+    const pirRef = db.ref("smarthome/sensors/pir").limitToLast(1);
+    
+    const listener = pirRef.on('child_added', (snapshot) => {
+        const latestPIR = snapshot.val().value;
+        const now = Date.now();
+        const remaining = Math.ceil((garageCloseTimestamp - now) / 1000);
+
+        // Nếu sắp đóng (còn dưới 5s) mà phát hiện xe/người
+        if (remaining > 0 && remaining <= 5 && latestPIR === "DETECTED") {
+            console.log(`⚠️ Sắp đóng (${remaining}s) nhưng có vật cản! +10s gia hạn.`);
+            garageCloseTimestamp += 10000;
+        }
+    });
+    */
+/*
+    // Vẫn cần một cái timer để chốt hạ việc đóng cửa khi HẾT thời gian
+    const checkFinalClose = setInterval(() => {
+        const now = Date.now();
+        if (now >= garageCloseTimestamp) {
+            console.log("🔒 An toàn. Đóng Garage.");
+            db.ref("smarthome/commands").update({ open_garage: false });
+            
+            // Dọn dẹp: Tắt listener và tắt chính cái interval này
+            pirRef.off('child_added', listener);
+            clearInterval(checkFinalClose);
+            global.garageTimer = null;
+        }
+    }, 1000);
+
+    global.garageTimer = checkFinalClose;
+}; */
+
+// ==========================================
+// CHIỀU 2: MQTT -> FIREBASE (CẬP NHẬT THỰC TẾ)
+// ==========================================
+// ==========================================
+// ==========================================
 // CHIỀU 2: MQTT -> FIREBASE (CẬP NHẬT THỰC TẾ)
 // ==========================================
 client.on('connect', () => {
@@ -97,89 +157,156 @@ client.on('connect', () => {
 });
 
 client.on('message', (topic, message) => {
-    const msg = message.toString().toLowerCase();
-    const parts = topic.split('/'); 
-    if (parts[0] !== "smarthome" || parts.length < 2) return;
+    const rawMsg = message.toString();
+    const msg = rawMsg.toLowerCase();
+    const parts = topic.split('/');
+    if (parts[0] !== "smarthome" || parts.length < 3) return;
 
-    const rootNode = parts[1]; 
-    const subNode = parts[2];  
+    const rootNode = parts[1]; // thường là "sensors" hoặc "devices"
+    const subNode = parts[2];  // ví dụ: "pir", "rfid", "dht11_1"...
 
-    // 1. Lưu Logs PIR (Cảm biến chuyển động)
-    // Khớp với code ESP32 gửi lên smarthome/sensors/pir
-    if (rootNode === "sensors" && subNode === "pir") {
-        db.ref("smarthome/sensors/pir").push({
-            value: "DETECTED",
-            timestamp: Date.now()
-        });
-        console.log("⚠️ [Alert] Phát hiện chuyển động tại cửa!");
-        return;
-    }
-
-    // 2. Lưu Logs RFID
-// 2. Xử lý RFID và Automation tự động mở cửa
-if (rootNode === "sensors" && subNode === "rfid") {
-        const rfidUID = message.toString().toUpperCase();
+    if (rootNode === "sensors") {
         
-        db.ref("smarthome/sensors/rfid_logs").push({
-            uid: rfidUID,
-            timestamp: Date.now()
-        });
+        // --- 1. XỬ LÝ PIR (Lưu lịch sử - Push) ---
+        if (subNode === "pir") {
+            const detected = (msg === "on" || msg === "detected");
+            console.log(`⚠️ PIR: ${detected ? "DETECTED" : "CLEAR"}`);
+            db.ref("smarthome/sensors/pir").push({
+                value: detected ? "DETECTED" : "CLEAR",
+                timestamp: Date.now()
+            });
+            return; // Xong thì dừng
+        }
 
-        console.log(`🔑 [Security] Thẻ RFID: ${rfidUID}`);
+        // --- 2. XỬ LÝ RFID (Lưu log + Tự mở cửa 10s) ---
+        if (subNode === "rfid") {
+            const rfidUID = rawMsg.toUpperCase();
+            console.log(`🔑 [SECURITY] Thẻ RFID quẹt: ${rfidUID}`);
 
-        // --- AUTOMATION: MỞ CỬA VÀ TỰ ĐỘNG ĐÓNG ---
-        // Giả sử cứ quẹt thẻ là mở (Kiệt có thể thêm check UID thẻ tại đây)
-        if (rfidUID !== "") { 
-            console.log("🔓 [Automation] Thẻ hợp lệ! Đang mở cửa...");
-            
-            // Bước 1: Mở chốt và mở cửa
-            db.ref("smarthome/commands").update({
-                unlock_door: true,
-                open_door: true
+            // Lưu log quẹt thẻ
+            db.ref("smarthome/sensors/rfid_logs").push({
+                uid: rfidUID,
+                timestamp: Date.now()
             });
 
-            // Bước 2: Đợi 10 giây sau tự động đóng và khóa lại
-            console.log("⏳ [Automation] Cửa sẽ tự đóng sau 10 giây...");
+            // Cập nhật giá trị thẻ mới nhất
+            db.ref("smarthome/sensors/rfid").set({
+                value: rfidUID,
+                last_updated: Date.now()
+            });
+
+            // Automation mở cửa
+            console.log("🔓 [AUTOMATION] Thẻ hợp lệ -> Mở cửa 10s...");
+            db.ref("smarthome/commands").update({ open_door: true });
+
             setTimeout(() => {
-                db.ref("smarthome/commands").update({
-                    open_door: false,   // Đóng cửa (Servo về 0)
-                    unlock_door: false  // Khóa chốt (Relay về HIGH)
-                });
-                console.log("🔒 [Automation] Đã tự động đóng và khóa cửa.");
-            }, 10000); // 10000ms = 10 giây
+                console.log("🔒 [AUTOMATION] Tự động đóng cửa.");
+                db.ref("smarthome/commands").update({ open_door: false });
+            }, 10000);
+            return;
         }
-        return;
+
+        // --- 3. XỬ LÝ NUMPAD (Chống dò mã + Mở Garage 30s) ---
+        if (subNode === "numpad") {
+            const now = Date.now();
+
+            // Kiểm tra trạng thái khóa (Brute force)
+            if (isLocked) {
+                if (now < lockUntil) {
+                    const remaining = Math.ceil((lockUntil - now) / 1000);
+                    console.log(`🚫 [AUTH] Đang bị khóa! Còn ${remaining}s.`);
+                    client.publish("smarthome/commands/oled_msg", `Locked: ${remaining}s`);
+                    return;
+                } else {
+                    isLocked = false;
+                    loginAttempts = 0;
+                    console.log("🔓 [AUTH] Đã hết thời gian chờ. Reset hệ thống.");
+                }
+            }
+
+            const correctPass = "123456";
+            if (rawMsg === correctPass) {
+                console.log("✅ [AUTH] Mật khẩu đúng!");
+                loginAttempts = 0;
+                db.ref("smarthome/commands").update({ open_garage: true });
+
+                if (global.garageTimer) clearTimeout(global.garageTimer);
+                global.garageTimer = setTimeout(() => {
+                    console.log("🔒 [TIMER] Tự động đóng Garage.");
+                    db.ref("smarthome/commands").update({ open_garage: false });
+                    global.garageTimer = null;
+                }, 30000);
+            } else {
+                loginAttempts++;
+                console.log(`❌ [AUTH] Sai lần ${loginAttempts}/5!`);
+                if (loginAttempts >= 5) {
+                    isLocked = true;
+                    lockUntil = now + 30000;
+                    db.ref("smarthome/security_alerts").push({
+                        type: "BRUTE_FORCE_ATTEMPT",
+                        timestamp: now
+                    });
+                }
+            }
+            return;
+        }
+
+// Cấu hình giới hạn số lượng bản ghi
+const MAX_LOGS = 100;
+
+// --- 4. CÁC CẢM BIẾN CÒN LẠI ---
+if (subNode.includes("dht11") || subNode === "mq2") {
+    const historyRef = db.ref(`smarthome/logs/sensor_history/${subNode}`);
+
+    // 1. Đẩy dữ liệu mới lên
+    historyRef.push({
+        value: rawMsg,
+        timestamp: Date.now()
+    });
+    console.log(`📊 [LOG] Cập nhật ${subNode}: ${rawMsg} tại ${new Date().toLocaleString()}`);
+    // 2. Kiểm tra và dọn dẹp (Round Robin logic)
+    historyRef.once('value', (snapshot) => {
+        const count = snapshot.numChildren();
+        
+        if (count > MAX_LOGS) {
+            // Tính số lượng cần xóa
+            const numToDelete = count - MAX_LOGS;
+            let i = 0;
+            
+            // Lấy danh sách các bản ghi cũ nhất (Firebase sắp xếp theo thời gian mặc định)
+            snapshot.forEach((child) => {
+                if (i < numToDelete) {
+                    // Xóa bản ghi cũ
+                    child.ref.remove();
+                    i++;
+                } else {
+                    return true; // Dừng vòng lặp khi đã xóa đủ
+                }
+            });
+            console.log(`🧹 [CLEANUP] Đã xóa ${numToDelete} bản ghi cũ của ${subNode}`);
+        }
+    });
+}
     }
 
-    // 3. Reverse Sync (Đồng bộ ngược trạng thái thiết bị)
+    // 3. Log Reverse Sync (Đồng bộ thiết bị)
     if (rootNode === "devices") {
         const devicePath = parts.slice(1).join('/'); 
         const deviceKey = parts[parts.length - 1];
 
-        // Cập nhật tình trạng thiết bị thực tế
+        // Log trạng thái thiết bị báo về
+        console.log(`🔄 [SYNC] Thiết bị báo về: ${deviceKey} ---> ${msg.toUpperCase()}`);
+
         db.ref(`smarthome/${devicePath}`).update({
             status: msg,
-            last_updated: Date.now()
+            last_updated: Date.now(),
+            // console them value cua thiết bị nếu cần, ví dụ: value: rawMsg 
         });
 
-        // Đảm bảo nút gạt trên App khớp với trạng thái vật lý
-        if (deviceKey === "door") {
-            db.ref("smarthome/commands/open_door").set(msg === "open");
-        } 
-
-        else if (deviceKey === "garage" || deviceKey === "garage_door") { // Thêm cái này
-            db.ref("smarthome/commands/open_garage").set(msg === "open");
-        }
-        else if (deviceKey === "door_lock_main") {
-            db.ref("smarthome/commands/unlock_door").set(msg === "unlocked");
-        }
-        else if (deviceKey === "sprinkler") {
-            db.ref("smarthome/commands/toggle_sprinkler").set(msg === "active" || msg === "on");
-        }
-        else if (deviceKey === "light_1") {
-            db.ref("smarthome/commands/toggle_light_1").set(msg === "on");
-        }
-        
-        console.log(`🔄 [Device -> App] Đồng bộ trạng thái ${deviceKey}: ${msg}`);
+        // Cập nhật ngược lên nút bấm (commands)
+        if (deviceKey === "door") db.ref("smarthome/commands/open_door").set(msg === "open");
+        else if (deviceKey === "garage_door") db.ref("smarthome/commands/open_garage").set(msg === "open");
+        else if (deviceKey === "sprinkler") db.ref("smarthome/commands/toggle_sprinkler").set(msg === "active");
+        else if (deviceKey === "light_1") db.ref("smarthome/commands/toggle_light_1").set(msg === "on");
     }
 });

@@ -1,191 +1,182 @@
+
 import { View, Text, StyleSheet, Dimensions, ScrollView } from "react-native";
 import { useEffect, useState } from "react";
 import { LineChart } from "react-native-chart-kit";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, query, limitToLast } from "firebase/database";
 import { db } from "../../services/firebaseConfig";
 
 const screenWidth = Dimensions.get("window").width;
 
-export default function StatusScreen(){
 
-  const [temp,setTemp] = useState(20);
-  const [humidity,setHumidity] = useState(50);
-  const [history, setHistory] = useState<{temp: number, hum: number}[]>([]);
+export default function StatusScreen() {
+  // ... các phần useEffect và State giữ nguyên như cũ
+  const [history1, setHistory1] = useState<number[]>([]); // dht11_1
+  const [history2, setHistory2] = useState<number[]>([]); // dht11_2
+  const [historyMQ, setHistoryMQ] = useState<number[]>([]); // mq2
 
-  useEffect(()=>{
-
-    // 🔥 Listen to temperature changes
-    const tempRef = ref(db, 'smarthome/sensors/temperature');
-    const unsubscribeTemp = onValue(tempRef, (snap)=>{
-      const newTemp = snap.val() || 20;
-      setTemp(newTemp);
-
-      setHistory(prev => {
-        const updated = [...prev, { temp: newTemp, hum: prev[prev.length - 1]?.hum || 50 }];
-        if(updated.length > 20) updated.shift();
-        return updated;
+  useEffect(() => {
+    // 1. Lấy dữ liệu cho DHT11_1
+    const ref1 = query(ref(db, 'smarthome/logs/sensor_history/dht11_1'), limitToLast(15));
+    const unsub1 = onValue(ref1, (snap) => {
+      const data: number[] = [];
+      snap.forEach((child) => {
+        const val = child.val();
+        data.push(parseFloat(val?.value) || 0);
       });
+      setHistory1(data);
     });
 
-    // 🔥 Listen to humidity changes
-    const humRef = ref(db, 'smarthome/sensors/humidity');
-    const unsubscribeHum = onValue(humRef, (snap)=>{
-      const newHum = snap.val() || 50;
-      setHumidity(newHum);
-
-      setHistory(prev => {
-        const updated = [...prev];
-        if(updated.length > 0){
-          updated[updated.length - 1].hum = newHum;
-        } else {
-          updated.push({ temp: 20, hum: newHum });
-        }
-        if(updated.length > 20) updated.shift();
-        return updated;
+    // 2. Lấy dữ liệu cho DHT11_2
+    const ref2 = query(ref(db, 'smarthome/logs/sensor_history/dht11_2'), limitToLast(15));
+    const unsub2 = onValue(ref2, (snap) => {
+      const data: number[] = [];
+      snap.forEach((child) => {
+        const val = child.val();
+        data.push(parseFloat(val?.value) || 0);
       });
+      setHistory2(data);
     });
 
-    return ()=>{
-      unsubscribeTemp();
-      unsubscribeHum();
+    // 3. Lấy dữ liệu cho MQ2
+    const refMQ = query(ref(db, 'smarthome/logs/sensor_history/mq2'), limitToLast(15));
+    const unsubMQ = onValue(refMQ, (snap) => {
+      const data: number[] = [];
+      snap.forEach((child) => {
+        const val = child.val();
+        data.push(parseFloat(val?.value) || 0);
+      });
+      setHistoryMQ(data);
+    });
+
+    return () => {
+      unsub1(); unsub2(); unsubMQ();
     };
+  }, []);
 
-  },[]);
+  // HÀM RENDER BIỂU ĐỒ: ép trục Y lên 150, line dày, nền tối neon (theo yêu cầu mới)
+  const renderChart = (data: number[], color: string) => {
+    const chartData = data.length > 0 ? data : [0];
+    return (
+      <LineChart
+        data={{
+          labels: data.map((_, i) => i.toString()),
+          datasets: [
+            {
+              data: chartData,
+              color: (opacity = 1) => color,
+              strokeWidth: 3
+            },
+            {
+              data: [150],
+              color: () => "transparent",
+              strokeWidth: 3
+            }
+          ]
+        }}
+        width={screenWidth * 0.9}
+        height={220}
+        chartConfig={{
+          backgroundColor: "#8c5d5c",
+          backgroundGradientFrom: "#8c5d5c",
+          backgroundGradientTo: "#5e3a39",
+          decimalPlaces: 0,
+          color: (opacity = 1) => color,
+          labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          propsForBackgroundLines: {
+            strokeDasharray: "0",
+            stroke: "rgba(255, 255, 255, 0.1)"
+          }
+        }}
+        fromZero={true}
+        segments={5}
+        bezier
+        style={styles.chart}
+      />
+    );
+  };
 
-  const tempData = history.map(item => item.temp);
-  const humData = history.map(item => item.hum);
-  const labels = history.map((_, i) => i.toString());
-
-  return(
-
+  return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>GIÁM SÁT THỰC TẾ</Text>
 
-      <Text style={styles.title}>Thông số môi trường</Text>
-
-
-      <View style={styles.rowBox}>
-        
-        <View style={styles.textBox}>
-          <Text style={styles.smallText}>
-            Nhiệt độ
-          </Text>
-          <Text style={styles.valueText}>
-            {temp} °C
-          </Text>
+      {/* BIỂU ĐỒ 1: DHT11_1 - Dùng màu TRẮNG cho nổi nhất */}
+      <View style={styles.card}>
+        <View style={styles.headerRow}>
+           <Text style={styles.cardTitle}>🌡️ Nhiệt độ Phòng ngủ (S1)</Text>
+           <Text style={styles.liveValue}>{history1[history1.length - 1] || 0} °C</Text>
         </View>
-
-        {history.length > 0 && (
-          <LineChart
-            data={{
-              labels: labels,
-              datasets: [{ data: tempData }]
-            }}
-            width={screenWidth * 0.45}
-            height={120}
-            yAxisSuffix=""
-            chartConfig={{
-              backgroundColor: "#C6908F",
-              backgroundGradientFrom: "#C6908F",
-              backgroundGradientTo: "#C6908F",
-              decimalPlaces: 0,
-              color: () => `red`,
-              labelColor: () => "#000"
-            }}
-            withDots={false}
-            withInnerLines={false}
-            withOuterLines={false}
-            style={styles.chart}
-          />
-        )}
-
+        {renderChart(history1, "#FFFFFF")} 
       </View>
 
-
-      <View style={styles.rowBox}>
-        
-        <View style={styles.textBox}>
-          <Text style={styles.smallText}>
-            Độ ẩm
-          </Text>
-          <Text style={styles.valueText}>
-            {humidity} %
-          </Text>
+      {/* BIỂU ĐỒ 2: DHT11_2 - Dùng màu VÀNG NEON */}
+      <View style={styles.card}>
+        <View style={styles.headerRow}>
+           <Text style={styles.cardTitle}>🌡️ Nhiệt độ Garage (S2)</Text>
+           <Text style={styles.liveValue}>{history2[history2.length - 1] || 0} °C</Text>
         </View>
-
-        {history.length > 0 && (
-          <LineChart
-            data={{
-              labels: labels,
-              datasets: [{ data: humData }]
-            }}
-            width={screenWidth * 0.45}
-            height={120}
-            yAxisSuffix=""
-            chartConfig={{
-              backgroundColor: "#C6908F",
-              backgroundGradientFrom: "#C6908F",
-              backgroundGradientTo: "#C6908F",
-              decimalPlaces: 0,
-              color: () => `blue`,
-              labelColor: () => "#000"
-            }}
-            withDots={false}
-            withInnerLines={false}
-            withOuterLines={false}
-            style={styles.chart}
-          />
-        )}
-
+        {renderChart(history2, "#EAFF00")}
       </View>
 
+      {/* BIỂU ĐỒ 3: MQ2 - Dùng màu XANH CYAN */}
+      <View style={styles.card}>
+        <View style={styles.headerRow}>
+           <Text style={styles.cardTitle}>💨 Mức độ khói (MQ2)</Text>
+           <Text style={styles.liveValue}>{historyMQ[historyMQ.length - 1] || 0}</Text>
+        </View>
+        {renderChart(historyMQ, "#00E5FF")}
+      </View>
     </ScrollView>
-
   );
 }
 
 const styles = StyleSheet.create({
-
-container:{
-  flexGrow:1,
-  justifyContent:"center",
-  alignItems:"center",
-  backgroundColor:"#D79AA3"
-},
-
-title:{
-  fontSize:22,
-  fontWeight:"bold",
-  marginBottom:30
-},
-
-
-rowBox:{
-  flexDirection:"row",
-  backgroundColor:"#C6908F",
-  borderRadius:20,
-  marginBottom:20,
-  width:"90%",
-  padding:15,
-  alignItems:"center",
-  justifyContent:"space-between"
-},
-
-textBox:{
-  justifyContent:"center"
-},
-
-smallText:{
-  fontSize:14,
-  color:"#333"
-},
-
-valueText:{
-  fontSize:20,
-  fontWeight:"bold"
-},
-
-chart:{
-  borderRadius:10
-}
-
+  container: {
+    paddingVertical: 40,
+    alignItems: "center",
+    backgroundColor: "#D79AA3"
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+    marginBottom: 25,
+    color: "#fff",
+    letterSpacing: 1
+  },
+  card: {
+    backgroundColor: "#C6908F",
+    borderRadius: 25,
+    padding: 12,
+    width: "95%",
+    marginBottom: 20,
+    // Đổ bóng mạnh hơn cho nổi khối
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    marginBottom: 5
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#FFFFFF"
+  },
+  liveValue: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    paddingHorizontal: 10,
+    borderRadius: 10
+  },
+  chart: {
+    marginVertical: 5,
+    borderRadius: 20
+  }
 });
