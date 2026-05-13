@@ -278,18 +278,155 @@ export default function ControlScreen() {
         .trim()
         .replace(/ga ra/g, "gara")
         .replace(/ga ga/g, "gara")
-        .replace(/ra ra/g, "gara");
+        .replace(/ra ra/g, "gara")
+        .replace(/ga-da/g, "gara")
+        .replace(/gala/g, "gara")
+        .replace(/\s+/g, " ");
 
     voiceLog(
       "Nội dung nhận diện:",
       normalized
     );
 
+    // =====================================================
+    // ƯU TIÊN CÂU CỤ THỂ TRƯỚC
+    // =====================================================
+
     // =========================
-    // BẬT TOÀN BỘ ĐÈN
+    // PHÒNG KHÁCH ON
     // =========================
 
     if (
+      normalized.includes("sofa") ||
+      normalized.includes("bật đèn phòng khách")
+    ) {
+
+      voiceLog(
+        "Đã hiểu: BẬT ĐÈN PHÒNG KHÁCH"
+      );
+
+      await sendCommand(
+        "toggle_light_1",
+        true
+      );
+
+      return;
+
+    }
+
+    // =========================
+    // PHÒNG KHÁCH OFF
+    // =========================
+
+    if (
+      normalized.includes("tắt đèn phòng khách")
+    ) {
+
+      voiceLog(
+        "Đã hiểu: TẮT ĐÈN PHÒNG KHÁCH"
+      );
+
+      await sendCommand(
+        "toggle_light_1",
+        false
+      );
+
+      return;
+
+    }
+
+    // =========================
+    // PHÒNG NGỦ ON
+    // =========================
+
+    if (
+      normalized.includes("sleep") ||
+      normalized.includes("bật đèn phòng ngủ")
+    ) {
+
+      voiceLog(
+        "Đã hiểu: BẬT ĐÈN PHÒNG NGỦ"
+      );
+
+      await sendCommand(
+        "toggle_light_2",
+        true
+      );
+
+      return;
+
+    }
+
+    // =========================
+    // PHÒNG NGỦ OFF
+    // =========================
+
+    if (
+      normalized.includes("tắt đèn phòng ngủ")
+    ) {
+
+      voiceLog(
+        "Đã hiểu: TẮT ĐÈN PHÒNG NGỦ"
+      );
+
+      await sendCommand(
+        "toggle_light_2",
+        false
+      );
+
+      return;
+
+    }
+
+    // =========================
+    // GARA LIGHT ON
+    // =========================
+
+    if (
+      normalized.includes("car") ||
+      normalized.includes("bật đèn gara")
+    ) {
+
+      voiceLog(
+        "Đã hiểu: BẬT ĐÈN GARA"
+      );
+
+      await sendCommand(
+        "toggle_light_3",
+        true
+      );
+
+      return;
+
+    }
+
+    // =========================
+    // GARA LIGHT OFF
+    // =========================
+
+    if (
+      normalized.includes("tắt đèn gara")
+    ) {
+
+      voiceLog(
+        "Đã hiểu: TẮT ĐÈN GARA"
+      );
+
+      await sendCommand(
+        "toggle_light_3",
+        false
+      );
+
+      return;
+
+    }
+
+    // =========================
+    // OPEN ALL LIGHTS
+    // =========================
+
+    if (
+      normalized.includes("open") ||
       normalized.includes("bật đèn")
     ) {
 
@@ -317,10 +454,11 @@ export default function ControlScreen() {
     }
 
     // =========================
-    // TẮT TOÀN BỘ ĐÈN
+    // CLOSE ALL LIGHTS
     // =========================
 
     if (
+      normalized.includes("light on") ||
       normalized.includes("tắt đèn")
     ) {
 
@@ -348,137 +486,13 @@ export default function ControlScreen() {
     }
 
     // =========================
-    // ĐÈN PHÒNG KHÁCH
+    // OPEN DOOR
     // =========================
 
     if (
-      normalized.includes(
-        "bật đèn phòng khách"
-      )
-    ) {
-
-      voiceLog(
-        "Đã hiểu: BẬT ĐÈN PHÒNG KHÁCH"
-      );
-
-      await sendCommand(
-        "toggle_light_1",
-        true
-      );
-
-      return;
-
-    }
-
-    if (
-      normalized.includes(
-        "tắt đèn phòng khách"
-      )
-    ) {
-
-      voiceLog(
-        "Đã hiểu: TẮT ĐÈN PHÒNG KHÁCH"
-      );
-
-      await sendCommand(
-        "toggle_light_1",
-        false
-      );
-
-      return;
-
-    }
-
-    // =========================
-    // ĐÈN PHÒNG NGỦ
-    // =========================
-
-    if (
-      normalized.includes(
-        "bật đèn phòng ngủ"
-      )
-    ) {
-
-      voiceLog(
-        "Đã hiểu: BẬT ĐÈN PHÒNG NGỦ"
-      );
-
-      await sendCommand(
-        "toggle_light_2",
-        true
-      );
-
-      return;
-
-    }
-
-    if (
-      normalized.includes(
-        "tắt đèn phòng ngủ"
-      )
-    ) {
-
-      voiceLog(
-        "Đã hiểu: TẮT ĐÈN PHÒNG NGỦ"
-      );
-
-      await sendCommand(
-        "toggle_light_2",
-        false
-      );
-
-      return;
-
-    }
-
-    // =========================
-    // ĐÈN GARA
-    // =========================
-
-    if (
-      normalized.includes(
-        "bật đèn gara"
-      )
-    ) {
-
-      voiceLog(
-        "Đã hiểu: BẬT ĐÈN GARA"
-      );
-
-      await sendCommand(
-        "toggle_light_3",
-        true
-      );
-
-      return;
-
-    }
-
-    if (
-      normalized.includes(
-        "tắt đèn gara"
-      )
-    ) {
-
-      voiceLog(
-        "Đã hiểu: TẮT ĐÈN GARA"
-      );
-
-      await sendCommand(
-        "toggle_light_3",
-        false
-      );
-
-      return;
-
-    }
-
-    // =========================
-    // CỬA CHÍNH
-    // =========================
-
-    if (
-      normalized.includes("mở cửa")
+      normalized.includes("open door") ||
+      normalized.includes("mở cửa") ||
+      normalized.includes("gâu gâu gâu")
     ) {
 
       voiceLog(
@@ -494,7 +508,12 @@ export default function ControlScreen() {
 
     }
 
+    // =========================
+    // CLOSE DOOR
+    // =========================
+
     if (
+      normalized.includes("close door") ||
       normalized.includes("đóng cửa")
     ) {
 
@@ -512,13 +531,12 @@ export default function ControlScreen() {
     }
 
     // =========================
-    // GARA
+    // OPEN GARAGE
     // =========================
 
     if (
-      normalized.includes(
-        "mở gara"
-      )
+      normalized.includes("chicken") ||
+      normalized.includes("mở gara")
     ) {
 
       voiceLog(
@@ -534,10 +552,13 @@ export default function ControlScreen() {
 
     }
 
+    // =========================
+    // CLOSE GARAGE
+    // =========================
+
     if (
-      normalized.includes(
-        "đóng gara"
-      )
+      normalized.includes("duck") ||
+      normalized.includes("đóng gara")
     ) {
 
       voiceLog(
@@ -554,7 +575,7 @@ export default function ControlScreen() {
     }
 
     // =========================
-    // KHÔNG NHẬN DIỆN ĐƯỢC
+    // KHÔNG NHẬN DIỆN
     // =========================
 
     voiceLog(
@@ -592,10 +613,6 @@ export default function ControlScreen() {
 
       }
 
-      // =========================
-      // STOP CÁI CŨ NẾU CÓ
-      // =========================
-
       if (
         recognitionRef.current
       ) {
@@ -613,7 +630,7 @@ export default function ControlScreen() {
 
       recog.interimResults = true;
 
-      recog.maxAlternatives = 1;
+      recog.maxAlternatives = 5;
 
       recog.onstart = () => {
 
@@ -647,10 +664,6 @@ export default function ControlScreen() {
         setIsRecording(false);
 
       };
-
-      // =========================
-      // REALTIME RESULT
-      // =========================
 
       recog.onresult = async (
         event: any
@@ -686,10 +699,6 @@ export default function ControlScreen() {
           }
 
         }
-
-        // =========================
-        // XỬ LÝ KHI CÓ CÂU HOÀN CHỈNH
-        // =========================
 
         if (
           finalTranscript.trim()
@@ -831,8 +840,6 @@ export default function ControlScreen() {
 
           if (!data) return;
 
-          // DOOR
-
           if (data.door) {
 
             setOpenMainDoor(
@@ -843,8 +850,6 @@ export default function ControlScreen() {
             );
 
           }
-
-          // GARAGE
 
           if (
             data.garage_door
@@ -865,8 +870,6 @@ export default function ControlScreen() {
             );
 
           }
-
-          // LIGHTS
 
           const lights =
             data.lights;
@@ -1021,8 +1024,6 @@ export default function ControlScreen() {
         Smart Home Control
       </Text>
 
-      {/* VOICE */}
-
       <View style={styles.box}>
 
         <Text style={styles.label}>
@@ -1066,8 +1067,6 @@ export default function ControlScreen() {
 
       </View>
 
-      {/* DEVICES */}
-
       {renderItem(
         "Mở Cửa Chính",
         openMainDoor,
@@ -1108,8 +1107,6 @@ export default function ControlScreen() {
         "Đang Tắt"
       )}
 
-      {/* AUTO GARAGE */}
-
       <View style={styles.box}>
 
         <Text style={styles.label}>
@@ -1124,8 +1121,6 @@ export default function ControlScreen() {
         />
 
       </View>
-
-      {/* PASSWORD */}
 
       <View style={styles.box}>
 
