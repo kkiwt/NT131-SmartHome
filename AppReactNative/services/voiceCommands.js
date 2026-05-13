@@ -1,81 +1,245 @@
 export const processVoiceCommand = (text) => {
-  const command = text.toLowerCase();
 
-  // normalize tiếng Việt
+  const command =
+    text.toLowerCase().trim();
+
+  // =========================
+  // NORMALIZE
+  // =========================
+
   const normalized = command
     .replace(/ga ra/g, "gara")
     .replace(/ga ga/g, "gara")
-    .replace(/ra ra/g, "gara");
+    .replace(/ra ra/g, "gara")
+    .replace(/gala/g, "gara")
+    .replace(/\s+/g, " ");
 
-  // ===== ĐÈN =====
+  console.log(
+    "🎤 Voice:",
+    normalized
+  );
 
-  if (normalized.includes("bật đèn")) {
+  // =====================================================
+  // ƯU TIÊN CÂU CỤ THỂ TRƯỚC
+  // =====================================================
+
+  // =========================
+  // ĐÈN PHÒNG KHÁCH ON
+  // =========================
+
+  if (
+    normalized.includes("sofa") ||
+    normalized.includes(
+      "bật đèn phòng khách"
+    )
+  ) {
+
+    return {
+      toggle_light_1: true,
+    };
+
+  }
+
+  // =========================
+  // ĐÈN PHÒNG KHÁCH OFF
+  // =========================
+
+  if (
+    normalized.includes(
+      "tắt đèn phòng khách"
+    )
+  ) {
+
+    return {
+      toggle_light_1: false,
+    };
+
+  }
+
+  // =========================
+  // ĐÈN PHÒNG NGỦ ON
+  // =========================
+
+  if (
+    normalized.includes("sleep") ||
+    normalized.includes(
+      "bật đèn phòng ngủ"
+    )
+  ) {
+
+    return {
+      toggle_light_2: true,
+    };
+
+  }
+
+  // =========================
+  // ĐÈN PHÒNG NGỦ OFF
+  // =========================
+
+  if (
+    normalized.includes(
+      "tắt đèn phòng ngủ"
+    )
+  ) {
+
+    return {
+      toggle_light_2: false,
+    };
+
+  }
+
+  // =========================
+  // ĐÈN GARA ON
+  // =========================
+
+  if (
+    normalized.includes("car") ||
+    normalized.includes(
+      "bật đèn gara"
+    )
+  ) {
+
+    return {
+      toggle_light_3: true,
+    };
+
+  }
+
+  // =========================
+  // ĐÈN GARA OFF
+  // =========================
+
+  if (
+    normalized.includes(
+      "tắt đèn gara"
+    )
+  ) {
+
+    return {
+      toggle_light_3: false,
+    };
+
+  }
+
+  // =========================
+  // BẬT TOÀN BỘ ĐÈN
+  // =========================
+
+  if (
+    normalized.includes("open") ||
+    normalized.includes("bật đèn")
+  ) {
+
     return {
       toggle_light_1: true,
       toggle_light_2: true,
       toggle_light_3: true,
     };
+
   }
 
-  if (normalized.includes("tắt đèn")) {
+  // =========================
+  // TẮT TOÀN BỘ ĐÈN
+  // =========================
+
+  if (
+    normalized.includes("light on") ||
+    normalized.includes("tắt đèn")
+  ) {
+
     return {
       toggle_light_1: false,
       toggle_light_2: false,
       toggle_light_3: false,
     };
+
   }
 
-  if (normalized.includes("bật đèn phòng khách")) {
-    return {
-      toggle_light_1: true,
-    };
-  }
+  // =========================
+  // MỞ CỬA
+  // =========================
 
-  if (normalized.includes("bật đèn phòng ngủ")) {
-    return {
-      toggle_light_2: true,
-    };
-  }
+  if (
+    normalized.includes(
+      "open door"
+    ) ||
+    normalized.includes(
+      "mở cửa"
+    ) ||
+    normalized.includes(
+      "gâu gâu gâu"
+    )
+  ) {
 
-  if (normalized.includes("bật đèn gara")) {
-    return {
-      toggle_light_3: true,
-    };
-  }
-
-  // ===== CỬA =====
-
-  if (normalized.includes("mở cửa")) {
     return {
       open_door: true,
     };
+
   }
 
-  if (normalized.includes("đóng cửa")) {
+  // =========================
+  // ĐÓNG CỬA
+  // =========================
+
+  if (
+    normalized.includes(
+      "close door"
+    ) ||
+    normalized.includes(
+      "đóng cửa"
+    )
+  ) {
+
     return {
       open_door: false,
     };
+
   }
 
-  // ===== GARAGE =====
+  // =========================
+  // MỞ GARA
+  // =========================
 
   if (
-    normalized.includes("mở gara") ||
-    normalized.includes("mở ga ra")
+    normalized.includes(
+      "chicken"
+    ) ||
+    normalized.includes(
+      "mở gara"
+    )
   ) {
+
     return {
       open_garage: true,
     };
+
   }
 
+  // =========================
+  // ĐÓNG GARA
+  // =========================
+
   if (
-    normalized.includes("đóng gara") ||
-    normalized.includes("đóng ga ra")
+    normalized.includes(
+      "duck"
+    ) ||
+    normalized.includes(
+      "đóng gara"
+    )
   ) {
+
     return {
       open_garage: false,
     };
+
   }
 
+  // =========================
+  // KHÔNG HIỂU
+  // =========================
+
   return null;
+
 };
+
