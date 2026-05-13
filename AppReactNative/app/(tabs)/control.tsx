@@ -9,9 +9,16 @@ import {
   ScrollView
 } from "react-native";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
 import { Ionicons } from "@expo/vector-icons";
-import { ref, onValue, set } from "firebase/database";
+
+import {
+  ref,
+  onValue,
+  set
+} from "firebase/database";
+
 import { db } from "../../services/firebaseConfig";
 
 export default function ControlScreen() {
@@ -44,200 +51,535 @@ export default function ControlScreen() {
   const [password, setPassword] =
     useState("");
 
+  const recognitionRef =
+    useRef<any>(null);
+
   // =========================
-  // UPDATE FIREBASE
+  // LOG FUNCTION
+  // =========================
+
+  const voiceLog = (
+    title: string,
+    data?: any
+  ) => {
+
+    console.log(
+      `🎤 ${title}`,
+      data || ""
+    );
+
+  };
+
+  // =========================
+  // FIREBASE COMMAND
   // =========================
 
   const sendCommand = async (
-  commandPath: string,
-  value: any
-) => {
+    commandPath: string,
+    value: any
+  ) => {
 
-  try {
+    try {
+
+      voiceLog(
+        "Gửi lệnh:",
+        {
+          commandPath,
+          value
+        }
+      );
+
+      // =========================
+      // LIGHT 1
+      // =========================
+
+      if (
+        commandPath === "toggle_light_1"
+      ) {
+
+        await set(
+          ref(
+            db,
+            "smarthome/commands/toggle_light_1"
+          ),
+          value
+        );
+
+        await set(
+          ref(
+            db,
+            "smarthome/devices/lights/light_1/status"
+          ),
+          value ? "on" : "off"
+        );
+
+      }
+
+      // =========================
+      // LIGHT 2
+      // =========================
+
+      else if (
+        commandPath === "toggle_light_2"
+      ) {
+
+        await set(
+          ref(
+            db,
+            "smarthome/commands/toggle_light_2"
+          ),
+          value
+        );
+
+        await set(
+          ref(
+            db,
+            "smarthome/devices/lights/light_2/status"
+          ),
+          value ? "on" : "off"
+        );
+
+      }
+
+      // =========================
+      // LIGHT 3
+      // =========================
+
+      else if (
+        commandPath === "toggle_light_3"
+      ) {
+
+        await set(
+          ref(
+            db,
+            "smarthome/commands/toggle_light_3"
+          ),
+          value
+        );
+
+        await set(
+          ref(
+            db,
+            "smarthome/devices/lights/light_3/status"
+          ),
+          value ? "on" : "off"
+        );
+
+      }
+
+      // =========================
+      // MAIN DOOR
+      // =========================
+
+      else if (
+        commandPath === "open_door"
+      ) {
+
+        await set(
+          ref(
+            db,
+            "smarthome/commands/open_door"
+          ),
+          value
+        );
+
+        await set(
+          ref(
+            db,
+            "smarthome/devices/door/status"
+          ),
+          value
+            ? "opened"
+            : "closed"
+        );
+
+      }
+
+      // =========================
+      // GARAGE
+      // =========================
+
+      else if (
+        commandPath === "open_garage"
+      ) {
+
+        await set(
+          ref(
+            db,
+            "smarthome/commands/open_garage"
+          ),
+          value
+        );
+
+        await set(
+          ref(
+            db,
+            "smarthome/devices/garage_door/status"
+          ),
+          value
+            ? "opened"
+            : "closed"
+        );
+
+      }
+
+      // =========================
+      // AUTO GARAGE
+      // =========================
+
+      else if (
+        commandPath === "enable_auto_garage"
+      ) {
+
+        await set(
+          ref(
+            db,
+            "smarthome/commands/enable_auto_garage"
+          ),
+          value
+        );
+
+        await set(
+          ref(
+            db,
+            "smarthome/devices/garage_door/auto_mode"
+          ),
+          value
+        );
+
+      }
+
+      voiceLog(
+        "Firebase cập nhật thành công"
+      );
+
+    } catch (error) {
+
+      console.error(
+        "❌ Lỗi gửi lệnh:",
+        error
+      );
+
+    }
+
+  };
+
+  // =========================
+  // HANDLE VOICE COMMAND
+  // =========================
+
+  const handleVoiceCommand = async (
+    text: string
+  ) => {
+
+    const normalized =
+      text
+        .toLowerCase()
+        .trim()
+        .replace(/ga ra/g, "gara")
+        .replace(/ga ga/g, "gara")
+        .replace(/ra ra/g, "gara");
+
+    voiceLog(
+      "Nội dung nhận diện:",
+      normalized
+    );
 
     // =========================
-    // LIGHT 1
+    // BẬT TOÀN BỘ ĐÈN
     // =========================
 
     if (
-      commandPath === "toggle_light_1"
+      normalized.includes("bật đèn")
     ) {
 
-      await set(
-        ref(
-          db,
-          "smarthome/commands/toggle_light_1"
-        ),
-        value
+      voiceLog(
+        "Đã hiểu: BẬT TOÀN BỘ ĐÈN"
       );
 
-      await set(
-        ref(
-          db,
-          "smarthome/devices/lights/light_1/status"
-        ),
-        value ? "on" : "off"
+      await sendCommand(
+        "toggle_light_1",
+        true
       );
+
+      await sendCommand(
+        "toggle_light_2",
+        true
+      );
+
+      await sendCommand(
+        "toggle_light_3",
+        true
+      );
+
+      return;
 
     }
 
     // =========================
-    // LIGHT 2
+    // TẮT TOÀN BỘ ĐÈN
     // =========================
 
-    else if (
-      commandPath === "toggle_light_2"
+    if (
+      normalized.includes("tắt đèn")
     ) {
 
-      await set(
-        ref(
-          db,
-          "smarthome/commands/toggle_light_2"
-        ),
-        value
+      voiceLog(
+        "Đã hiểu: TẮT TOÀN BỘ ĐÈN"
       );
 
-      await set(
-        ref(
-          db,
-          "smarthome/devices/lights/light_2/status"
-        ),
-        value ? "on" : "off"
+      await sendCommand(
+        "toggle_light_1",
+        false
       );
+
+      await sendCommand(
+        "toggle_light_2",
+        false
+      );
+
+      await sendCommand(
+        "toggle_light_3",
+        false
+      );
+
+      return;
 
     }
 
     // =========================
-    // LIGHT 3
+    // ĐÈN PHÒNG KHÁCH
     // =========================
 
-    else if (
-      commandPath === "toggle_light_3"
+    if (
+      normalized.includes(
+        "bật đèn phòng khách"
+      )
     ) {
 
-      await set(
-        ref(
-          db,
-          "smarthome/commands/toggle_light_3"
-        ),
-        value
+      voiceLog(
+        "Đã hiểu: BẬT ĐÈN PHÒNG KHÁCH"
       );
 
-      await set(
-        ref(
-          db,
-          "smarthome/devices/lights/light_3/status"
-        ),
-        value ? "on" : "off"
+      await sendCommand(
+        "toggle_light_1",
+        true
       );
+
+      return;
+
+    }
+
+    if (
+      normalized.includes(
+        "tắt đèn phòng khách"
+      )
+    ) {
+
+      voiceLog(
+        "Đã hiểu: TẮT ĐÈN PHÒNG KHÁCH"
+      );
+
+      await sendCommand(
+        "toggle_light_1",
+        false
+      );
+
+      return;
 
     }
 
     // =========================
-    // MAIN DOOR
+    // ĐÈN PHÒNG NGỦ
     // =========================
 
-    else if (
-      commandPath === "open_door"
+    if (
+      normalized.includes(
+        "bật đèn phòng ngủ"
+      )
     ) {
 
-      await set(
-        ref(
-          db,
-          "smarthome/commands/open_door"
-        ),
-        value
+      voiceLog(
+        "Đã hiểu: BẬT ĐÈN PHÒNG NGỦ"
       );
 
-      await set(
-        ref(
-          db,
-          "smarthome/devices/door/status"
-        ),
-        value
-          ? "opened"
-          : "closed"
+      await sendCommand(
+        "toggle_light_2",
+        true
       );
+
+      return;
+
+    }
+
+    if (
+      normalized.includes(
+        "tắt đèn phòng ngủ"
+      )
+    ) {
+
+      voiceLog(
+        "Đã hiểu: TẮT ĐÈN PHÒNG NGỦ"
+      );
+
+      await sendCommand(
+        "toggle_light_2",
+        false
+      );
+
+      return;
 
     }
 
     // =========================
-    // GARAGE
+    // ĐÈN GARA
     // =========================
 
-    else if (
-      commandPath === "open_garage"
+    if (
+      normalized.includes(
+        "bật đèn gara"
+      )
     ) {
 
-      await set(
-        ref(
-          db,
-          "smarthome/commands/open_garage"
-        ),
-        value
+      voiceLog(
+        "Đã hiểu: BẬT ĐÈN GARA"
       );
 
-      await set(
-        ref(
-          db,
-          "smarthome/devices/garage_door/status"
-        ),
-        value
-          ? "opened"
-          : "closed"
+      await sendCommand(
+        "toggle_light_3",
+        true
       );
+
+      return;
+
+    }
+
+    if (
+      normalized.includes(
+        "tắt đèn gara"
+      )
+    ) {
+
+      voiceLog(
+        "Đã hiểu: TẮT ĐÈN GARA"
+      );
+
+      await sendCommand(
+        "toggle_light_3",
+        false
+      );
+
+      return;
 
     }
 
     // =========================
-    // AUTO GARAGE
+    // CỬA CHÍNH
     // =========================
 
-    else if (
-      commandPath === "enable_auto_garage"
+    if (
+      normalized.includes("mở cửa")
     ) {
 
-      await set(
-        ref(
-          db,
-          "smarthome/commands/enable_auto_garage"
-        ),
-        value
+      voiceLog(
+        "Đã hiểu: MỞ CỬA"
       );
 
-      await set(
-        ref(
-          db,
-          "smarthome/devices/garage_door/auto_mode"
-        ),
-        value
+      await sendCommand(
+        "open_door",
+        true
       );
+
+      return;
 
     }
 
-  } catch (error) {
+    if (
+      normalized.includes("đóng cửa")
+    ) {
 
-    console.error(
-      "Lỗi gửi lệnh:",
-      error
+      voiceLog(
+        "Đã hiểu: ĐÓNG CỬA"
+      );
+
+      await sendCommand(
+        "open_door",
+        false
+      );
+
+      return;
+
+    }
+
+    // =========================
+    // GARA
+    // =========================
+
+    if (
+      normalized.includes(
+        "mở gara"
+      )
+    ) {
+
+      voiceLog(
+        "Đã hiểu: MỞ GARA"
+      );
+
+      await sendCommand(
+        "open_garage",
+        true
+      );
+
+      return;
+
+    }
+
+    if (
+      normalized.includes(
+        "đóng gara"
+      )
+    ) {
+
+      voiceLog(
+        "Đã hiểu: ĐÓNG GARA"
+      );
+
+      await sendCommand(
+        "open_garage",
+        false
+      );
+
+      return;
+
+    }
+
+    // =========================
+    // KHÔNG NHẬN DIỆN ĐƯỢC
+    // =========================
+
+    voiceLog(
+      "⚠️ Không hiểu câu lệnh"
     );
 
-  }
-
-};
+  };
 
   // =========================
-  // VOICE RECOGNITION
+  // START VOICE
   // =========================
 
   const startVoiceRecognition = () => {
 
     try {
 
-      // @ts-ignore
+      voiceLog(
+        "Bắt đầu ghi âm..."
+      );
+
       const SpeechRecognition =
-        (window as any).SpeechRecognition ||
-        (window as any).webkitSpeechRecognition;
+        (window as any)
+          .SpeechRecognition ||
+        (window as any)
+          .webkitSpeechRecognition;
 
       if (!SpeechRecognition) {
 
@@ -250,265 +592,148 @@ export default function ControlScreen() {
 
       }
 
-      const recognition =
+      // =========================
+      // STOP CÁI CŨ NẾU CÓ
+      // =========================
+
+      if (
+        recognitionRef.current
+      ) {
+
+        recognitionRef.current.stop();
+
+      }
+
+      const recog =
         new SpeechRecognition();
 
-      recognition.lang = "vi-VN";
+      recog.lang = "vi-VN";
 
-      recognition.continuous = false;
+      recog.continuous = true;
 
-      recognition.interimResults = false;
+      recog.interimResults = true;
 
-      recognition.onstart = () => {
+      recog.maxAlternatives = 1;
+
+      recog.onstart = () => {
+
+        voiceLog(
+          "Microphone ON"
+        );
 
         setIsRecording(true);
 
       };
 
-      recognition.onend = () => {
+      recog.onend = () => {
+
+        voiceLog(
+          "Microphone OFF"
+        );
 
         setIsRecording(false);
 
       };
 
-      recognition.onerror = (event: any) => {
-
-        console.error(event);
-
-        setIsRecording(false);
-
-      };
-
-      recognition.onresult = async (
+      recog.onerror = (
         event: any
       ) => {
 
-        const text =
-          event.results[0][0].transcript
-            .toLowerCase();
-
-        console.log(
-          "Voice:",
-          text
+        console.error(
+          "❌ Voice Error:",
+          event.error
         );
 
-        const normalized =
-          text
-            .replace(/ga ra/g, "gara")
-            .replace(/ga ga/g, "gara")
-            .replace(/ra ra/g, "gara");
-
-        // =========================
-        // ĐÈN
-        // =========================
-
-        if (
-          normalized.includes("bật đèn")
-        ) {
-
-          sendCommand(
-            "toggle_light_1",
-            true
-          );
-
-          sendCommand(
-            "toggle_light_2",
-            true
-          );
-
-          sendCommand(
-            "toggle_light_3",
-            true
-          );
-
-        }
-
-        if (
-          normalized.includes("tắt đèn")
-        ) {
-
-          sendCommand(
-            "toggle_light_1",
-            false
-          );
-
-          sendCommand(
-            "toggle_light_2",
-            false
-          );
-
-          sendCommand(
-            "toggle_light_3",
-            false
-          );
-
-        }
-
-        // =========================
-        // PHÒNG KHÁCH
-        // =========================
-
-        if (
-          normalized.includes(
-            "bật đèn phòng khách"
-          )
-        ) {
-
-          sendCommand(
-            "toggle_light_1",
-            true
-          );
-
-        }
-
-        if (
-          normalized.includes(
-            "tắt đèn phòng khách"
-          )
-        ) {
-
-          sendCommand(
-            "toggle_light_1",
-            false
-          );
-
-        }
-
-        // =========================
-        // PHÒNG NGỦ
-        // =========================
-
-        if (
-          normalized.includes(
-            "bật đèn phòng ngủ"
-          )
-        ) {
-
-          sendCommand(
-            "toggle_light_2",
-            true
-          );
-
-        }
-
-        if (
-          normalized.includes(
-            "tắt đèn phòng ngủ"
-          )
-        ) {
-
-          sendCommand(
-            "toggle_light_2",
-            false
-          );
-
-        }
-
-        // =========================
-        // GARA LIGHT
-        // =========================
-
-        if (
-          normalized.includes(
-            "bật đèn gara"
-          )
-        ) {
-
-          sendCommand(
-            "toggle_light_3",
-            true
-          );
-
-        }
-
-        if (
-          normalized.includes(
-            "tắt đèn gara"
-          )
-        ) {
-
-          sendCommand(
-            "toggle_light_3",
-            false
-          );
-
-        }
-
-        // =========================
-        // CỬA CHÍNH
-        // =========================
-
-        if (
-          normalized.includes(
-            "mở cửa"
-          )
-        ) {
-
-          sendCommand(
-            "open_door",
-            true
-          );
-
-        }
-
-        if (
-          normalized.includes(
-            "đóng cửa"
-          )
-        ) {
-
-          sendCommand(
-            "open_door",
-            false
-          );
-
-        }
-
-        // =========================
-        // GARA
-        // =========================
-
-        if (
-          normalized.includes("mở gara") ||
-          normalized.includes("mở ga ra")
-        ) {
-
-          sendCommand(
-            "open_garage",
-            true
-          );
-
-        }
-
-        if (
-          normalized.includes("đóng gara") ||
-          normalized.includes("đóng ga ra")
-        ) {
-
-          sendCommand(
-            "open_garage",
-            false
-          );
-
-        }
-
-        Alert.alert(
-          "Voice Command",
-          `Đã nhận: ${text}`
-        );
+        setIsRecording(false);
 
       };
 
-      recognition.start();
+      // =========================
+      // REALTIME RESULT
+      // =========================
+
+      recog.onresult = async (
+        event: any
+      ) => {
+
+        let finalTranscript = "";
+
+        for (
+          let i = event.resultIndex;
+          i < event.results.length;
+          i++
+        ) {
+
+          const transcript =
+            event.results[i][0]
+              .transcript;
+
+          const isFinal =
+            event.results[i].isFinal;
+
+          voiceLog(
+            isFinal
+              ? "FINAL"
+              : "LISTENING",
+            transcript
+          );
+
+          if (isFinal) {
+
+            finalTranscript +=
+              transcript;
+
+          }
+
+        }
+
+        // =========================
+        // XỬ LÝ KHI CÓ CÂU HOÀN CHỈNH
+        // =========================
+
+        if (
+          finalTranscript.trim()
+        ) {
+
+          await handleVoiceCommand(
+            finalTranscript
+          );
+
+        }
+
+      };
+
+      recognitionRef.current =
+        recog;
+
+      recog.start();
 
     } catch (error) {
 
       console.error(
-        "Voice Error:",
+        "❌ Voice Start Error:",
         error
       );
 
-      setIsRecording(false);
+    }
+
+  };
+
+  // =========================
+  // STOP VOICE
+  // =========================
+
+  const stopVoiceRecognition = () => {
+
+    voiceLog(
+      "Dừng ghi âm"
+    );
+
+    if (
+      recognitionRef.current
+    ) {
+
+      recognitionRef.current.stop();
 
     }
 
@@ -607,55 +832,76 @@ export default function ControlScreen() {
           if (!data) return;
 
           // DOOR
+
           if (data.door) {
 
             setOpenMainDoor(
-              data.door.status === "open" ||
-              data.door.status === "opened"
+              data.door.status ===
+                "open" ||
+              data.door.status ===
+                "opened"
             );
 
           }
 
           // GARAGE
-          if (data.garage_door) {
+
+          if (
+            data.garage_door
+          ) {
 
             setOpenGarageDoor(
-              data.garage_door.status === "open" ||
-              data.garage_door.status === "opened"
+              data.garage_door
+                .status ===
+                "open" ||
+                data.garage_door
+                  .status ===
+                  "opened"
             );
 
             setAutoGarage(
-              data.garage_door.auto_mode === true
+              data.garage_door
+                .auto_mode === true
             );
 
           }
 
           // LIGHTS
+
           const lights =
             data.lights;
 
           if (lights) {
 
-            if (lights.light_1) {
+            if (
+              lights.light_1
+            ) {
 
               setLivingLight(
-                lights.light_1.status === "on"
+                lights.light_1
+                  .status === "on"
               );
 
             }
 
-            if (lights.light_2) {
+            if (
+              lights.light_2
+            ) {
 
               setBedroomLight(
-                lights.light_2.status === "on"
+                lights.light_2
+                  .status === "on"
               );
 
             }
 
-            if (lights.light_3) {
+            if (
+              lights.light_3
+            ) {
 
               setGarageLight(
-                lights.light_3.status === "on"
+                lights.light_3
+                  .status === "on"
               );
 
             }
@@ -665,7 +911,19 @@ export default function ControlScreen() {
         }
       );
 
-    return () => unsubscribe();
+    return () => {
+
+      unsubscribe();
+
+      if (
+        recognitionRef.current
+      ) {
+
+        recognitionRef.current.stop();
+
+      }
+
+    };
 
   }, []);
 
@@ -717,7 +975,9 @@ export default function ControlScreen() {
   const renderItem = (
     title: string,
     value: boolean,
-    setValue: (v: boolean) => void,
+    setValue: (
+      v: boolean
+    ) => void,
     onText: string,
     offText: string
   ) => (
@@ -729,9 +989,11 @@ export default function ControlScreen() {
       </Text>
 
       <Text style={styles.status}>
-        Thực tế:
+        Trạng thái:
         {" "}
-        {value ? onText : offText}
+        {value
+          ? onText
+          : offText}
       </Text>
 
       <Switch
@@ -777,9 +1039,13 @@ export default function ControlScreen() {
                   : "#4CAF50"
             }
           ]}
-          onPress={
+          onPressIn={
             startVoiceRecognition
           }
+          onPressOut={
+            stopVoiceRecognition
+          }
+          activeOpacity={0.8}
         >
 
           <Ionicons
@@ -793,8 +1059,8 @@ export default function ControlScreen() {
         <Text style={styles.status}>
           {
             isRecording
-              ? "Đang nghe..."
-              : "Nhấn để nói"
+              ? "🎤 Đang nghe..."
+              : "Giữ để nói"
           }
         </Text>
 
@@ -852,7 +1118,9 @@ export default function ControlScreen() {
 
         <Switch
           value={autoGarage}
-          onValueChange={toggleAutoGarage}
+          onValueChange={
+            toggleAutoGarage
+          }
         />
 
       </View>
@@ -869,16 +1137,24 @@ export default function ControlScreen() {
           placeholder="New Password"
           secureTextEntry
           value={password}
-          onChangeText={setPassword}
+          onChangeText={
+            setPassword
+          }
           style={styles.input}
         />
 
         <TouchableOpacity
           style={styles.button}
-          onPress={handleChangePassword}
+          onPress={
+            handleChangePassword
+          }
         >
 
-          <Text style={styles.buttonText}>
+          <Text
+            style={
+              styles.buttonText
+            }
+          >
             Cập nhật
           </Text>
 
@@ -897,7 +1173,8 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     alignItems: "center",
-    backgroundColor: "#D79AA3",
+    backgroundColor:
+      "#D79AA3",
     paddingVertical: 40
   },
 
@@ -909,7 +1186,8 @@ const styles = StyleSheet.create({
   },
 
   box: {
-    backgroundColor: "#C6908F",
+    backgroundColor:
+      "#C6908F",
     width: "85%",
     padding: 15,
     borderRadius: 15,
@@ -930,7 +1208,8 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    backgroundColor: "#fff",
+    backgroundColor:
+      "#fff",
     width: "100%",
     padding: 10,
     borderRadius: 8,
@@ -938,7 +1217,8 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: "#444",
+    backgroundColor:
+      "#444",
     padding: 12,
     borderRadius: 8,
     marginTop: 10,
@@ -952,9 +1232,9 @@ const styles = StyleSheet.create({
   },
 
   voiceButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 85,
+    height: 85,
+    borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 10
