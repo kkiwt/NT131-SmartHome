@@ -25,3 +25,21 @@ npm install mqtt firebase-admin dotenv
 sau đó chạy server:
 node index.js
 rồi chạy lệnh mosquito ban đầu
+
+
+
+=======
+gói cho voice
+npm install react-native-voice
+npx expo install expo-dev-client
+
+tạo thêm
+trong folder services
+voiceCommands
+firebaseActión
+
+compônents
+VoiceControl
+run
+
+npx expo run:android
